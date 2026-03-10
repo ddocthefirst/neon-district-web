@@ -1,0 +1,984 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>NEON DISTRICT</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap" rel="stylesheet"/>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #080C14;
+    --cyan: #00E6FF;
+    --red: #FF2640;
+    --yellow: #FFD900;
+    --green: #1AFF73;
+    --purple: #A61AFF;
+    --dim: #0D1420;
+    --panel: #0A1020;
+  }
+
+  html, body {
+    background: var(--bg);
+    color: var(--cyan);
+    font-family: 'Share Tech Mono', monospace;
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    overflow-x: hidden;
+  }
+
+  /* CRT scanline overlay */
+  body::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: repeating-linear-gradient(
+      to bottom,
+      transparent 0px,
+      transparent 3px,
+      rgba(0,0,0,0.18) 3px,
+      rgba(0,0,0,0.18) 4px
+    );
+    pointer-events: none;
+    z-index: 9999;
+  }
+
+  #app {
+    width: 100%;
+    max-width: 440px;
+    min-height: 100vh;
+    padding: 16px;
+    position: relative;
+  }
+
+  /* ─── TITLE SCREEN ─── */
+  #title-screen {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    gap: 24px;
+  }
+
+  .logo-wrap {
+    text-align: center;
+    line-height: 1;
+  }
+
+  .logo-neon {
+    font-size: clamp(40px, 12vw, 64px);
+    letter-spacing: 6px;
+    color: var(--cyan);
+    text-shadow:
+      0 0 8px var(--cyan),
+      0 0 24px var(--cyan),
+      0 0 60px var(--cyan);
+    animation: flicker 6s infinite;
+  }
+
+  .logo-district {
+    font-size: clamp(28px, 9vw, 46px);
+    letter-spacing: 12px;
+    color: var(--red);
+    text-shadow:
+      0 0 8px var(--red),
+      0 0 24px var(--red),
+      0 0 60px rgba(255,38,64,0.5);
+  }
+
+  .logo-sub {
+    margin-top: 12px;
+    font-size: 11px;
+    letter-spacing: 4px;
+    color: rgba(0,230,255,0.4);
+  }
+
+  @keyframes flicker {
+    0%,100%  { opacity:1; }
+    91%      { opacity:1; }
+    92%      { opacity:.6; }
+    93%      { opacity:1; }
+    96%      { opacity:.8; }
+    97%      { opacity:1; }
+  }
+
+  .title-deco {
+    width: 100%;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--cyan), var(--red), transparent);
+    box-shadow: 0 0 8px var(--cyan);
+  }
+
+  .title-hints {
+    font-size: 11px;
+    color: rgba(0,230,255,0.35);
+    letter-spacing: 2px;
+    text-align: center;
+    line-height: 2;
+  }
+
+  /* ─── BUTTONS ─── */
+  .btn {
+    cursor: pointer;
+    background: rgba(0,0,0,0.6);
+    border: 1px solid var(--cyan);
+    color: var(--cyan);
+    font-family: inherit;
+    font-size: 14px;
+    letter-spacing: 3px;
+    padding: 12px 32px;
+    text-transform: uppercase;
+    transition: all 0.15s;
+    box-shadow: 0 0 10px rgba(0,230,255,0.3), inset 0 0 10px rgba(0,230,255,0.05);
+    position: relative;
+    overflow: hidden;
+  }
+  .btn::before {
+    content:'';
+    position:absolute;
+    inset:0;
+    background: linear-gradient(135deg, rgba(0,230,255,0.07) 0%, transparent 60%);
+  }
+  .btn:hover {
+    background: rgba(0,230,255,0.12);
+    box-shadow: 0 0 20px var(--cyan), 0 0 40px rgba(0,230,255,0.3), inset 0 0 15px rgba(0,230,255,0.1);
+    transform: translateY(-1px);
+  }
+  .btn:active { transform: translateY(1px); }
+
+  .btn-red    { border-color: var(--red);    color: var(--red);    box-shadow: 0 0 10px rgba(255,38,64,0.3); }
+  .btn-red:hover    { background: rgba(255,38,64,0.12);    box-shadow: 0 0 20px var(--red),    0 0 40px rgba(255,38,64,0.3); }
+  .btn-yellow { border-color: var(--yellow); color: var(--yellow); box-shadow: 0 0 10px rgba(255,217,0,0.3); }
+  .btn-yellow:hover { background: rgba(255,217,0,0.12); box-shadow: 0 0 20px var(--yellow), 0 0 40px rgba(255,217,0,0.3); }
+  .btn-green  { border-color: var(--green);  color: var(--green);  box-shadow: 0 0 10px rgba(26,255,115,0.3); }
+  .btn-green:hover  { background: rgba(26,255,115,0.12);  box-shadow: 0 0 20px var(--green),  0 0 40px rgba(26,255,115,0.3); }
+  .btn-purple { border-color: var(--purple); color: var(--purple); box-shadow: 0 0 10px rgba(166,26,255,0.3); }
+  .btn-purple:hover { background: rgba(166,26,255,0.12); box-shadow: 0 0 20px var(--purple), 0 0 40px rgba(166,26,255,0.3); }
+  .btn:disabled { opacity: 0.35; cursor: not-allowed; transform: none; }
+
+  /* ─── COMBAT SCREEN ─── */
+  #combat-screen { display:none; padding-top: 8px; }
+
+  .combat-header {
+    text-align: center;
+    font-size: 10px;
+    letter-spacing: 4px;
+    color: rgba(0,230,255,0.3);
+    margin-bottom: 12px;
+    border-bottom: 1px solid rgba(0,230,255,0.1);
+    padding-bottom: 8px;
+  }
+
+  /* ─── COMBATANT PANELS ─── */
+  .arena {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 12px;
+    align-items: stretch;
+  }
+
+  .combatant {
+    flex: 1;
+    background: var(--panel);
+    border: 1px solid rgba(0,230,255,0.2);
+    padding: 10px;
+    position: relative;
+    transition: border-color 0.2s;
+  }
+  .combatant.player-side { border-color: rgba(0,230,255,0.3); }
+  .combatant.enemy-side  { border-color: rgba(255,38,64,0.3); }
+
+  .combatant-label {
+    font-size: 9px;
+    letter-spacing: 3px;
+    margin-bottom: 6px;
+    opacity: 0.5;
+  }
+  .player-side .combatant-label { color: var(--cyan); }
+  .enemy-side  .combatant-label { color: var(--red); }
+
+  /* sprite figures */
+  .sprite {
+    width: 100%;
+    height: 80px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 8px;
+    transition: filter 0.1s;
+  }
+
+  .sprite-inner {
+    position: relative;
+    width: 48px;
+    height: 72px;
+  }
+
+  /* player sprite: cyan humanoid */
+  .player-sprite .head {
+    position: absolute;
+    top: 0; left: 50%; transform: translateX(-50%);
+    width: 20px; height: 20px;
+    border: 2px solid var(--cyan);
+    box-shadow: 0 0 8px var(--cyan), inset 0 0 6px rgba(0,230,255,0.3);
+    background: rgba(0,230,255,0.1);
+  }
+  .player-sprite .body {
+    position: absolute;
+    top: 22px; left: 50%; transform: translateX(-50%);
+    width: 26px; height: 28px;
+    border: 2px solid var(--cyan);
+    box-shadow: 0 0 8px var(--cyan), inset 0 0 8px rgba(0,230,255,0.2);
+    background: rgba(0,230,255,0.08);
+  }
+  .player-sprite .legs {
+    position: absolute;
+    top: 52px; left: 50%; transform: translateX(-50%);
+    width: 26px; height: 18px;
+    border: 2px solid var(--cyan);
+    border-top: none;
+    box-shadow: 0 0 6px var(--cyan);
+    background: rgba(0,230,255,0.05);
+  }
+  .player-sprite .arm-l {
+    position: absolute;
+    top: 24px; left: 4px;
+    width: 8px; height: 22px;
+    border: 2px solid var(--cyan);
+    box-shadow: 0 0 6px var(--cyan);
+    background: rgba(0,230,255,0.08);
+  }
+  .player-sprite .arm-r {
+    position: absolute;
+    top: 24px; right: 4px;
+    width: 8px; height: 22px;
+    border: 2px solid var(--cyan);
+    box-shadow: 0 0 6px var(--cyan);
+    background: rgba(0,230,255,0.08);
+  }
+
+  /* enemy sprite: red angular threat */
+  .enemy-sprite .head {
+    position: absolute;
+    top: 0; left: 50%; transform: translateX(-50%) rotate(45deg);
+    width: 18px; height: 18px;
+    border: 2px solid var(--red);
+    box-shadow: 0 0 10px var(--red), inset 0 0 6px rgba(255,38,64,0.4);
+    background: rgba(255,38,64,0.15);
+  }
+  .enemy-sprite .body {
+    position: absolute;
+    top: 20px; left: 50%; transform: translateX(-50%);
+    width: 30px; height: 30px;
+    border: 2px solid var(--red);
+    box-shadow: 0 0 10px var(--red), inset 0 0 8px rgba(255,38,64,0.2);
+    background: rgba(255,38,64,0.08);
+    clip-path: polygon(10% 0%, 90% 0%, 100% 50%, 90% 100%, 10% 100%, 0% 50%);
+  }
+  .enemy-sprite .legs {
+    position: absolute;
+    top: 52px; left: 50%; transform: translateX(-50%);
+    width: 24px; height: 18px;
+    border: 2px solid var(--red);
+    box-shadow: 0 0 6px var(--red);
+    background: rgba(255,38,64,0.05);
+    clip-path: polygon(0% 0%, 100% 0%, 80% 100%, 20% 100%);
+  }
+  .enemy-sprite .arm-l {
+    position: absolute;
+    top: 22px; left: 0px;
+    width: 10px; height: 20px;
+    border: 2px solid var(--red);
+    box-shadow: 0 0 6px var(--red);
+    background: rgba(255,38,64,0.08);
+    transform: rotate(-15deg);
+  }
+  .enemy-sprite .arm-r {
+    position: absolute;
+    top: 22px; right: 0px;
+    width: 10px; height: 20px;
+    border: 2px solid var(--red);
+    box-shadow: 0 0 6px var(--red);
+    background: rgba(255,38,64,0.08);
+    transform: rotate(15deg);
+  }
+
+  /* flash animations */
+  @keyframes hitFlashPlayer {
+    0%   { filter: brightness(1) drop-shadow(0 0 0 transparent); }
+    20%  { filter: brightness(3) drop-shadow(0 0 12px var(--red)); }
+    100% { filter: brightness(1) drop-shadow(0 0 0 transparent); }
+  }
+  @keyframes hitFlashEnemy {
+    0%   { filter: brightness(1) drop-shadow(0 0 0 transparent); }
+    20%  { filter: brightness(3) drop-shadow(0 0 12px var(--cyan)); }
+    100% { filter: brightness(1) drop-shadow(0 0 0 transparent); }
+  }
+  .flash-player { animation: hitFlashPlayer 0.4s ease-out forwards; }
+  .flash-enemy  { animation: hitFlashEnemy  0.4s ease-out forwards; }
+
+  /* screen shake */
+  @keyframes shake {
+    0%,100% { transform: translateX(0); }
+    15%  { transform: translateX(-6px) rotate(-0.5deg); }
+    30%  { transform: translateX(6px)  rotate(0.5deg); }
+    45%  { transform: translateX(-4px); }
+    60%  { transform: translateX(4px); }
+    75%  { transform: translateX(-2px); }
+  }
+  .shake { animation: shake 0.35s ease-out forwards; }
+
+  /* HP bar */
+  .hp-row {
+    font-size: 10px;
+    letter-spacing: 1px;
+    margin-bottom: 4px;
+    display: flex;
+    justify-content: space-between;
+  }
+  .hp-bar-track {
+    height: 8px;
+    background: rgba(255,255,255,0.07);
+    border: 1px solid rgba(255,255,255,0.1);
+    margin-bottom: 6px;
+    overflow: hidden;
+  }
+  .hp-bar-fill {
+    height: 100%;
+    transition: width 0.4s ease, background 0.4s, box-shadow 0.4s;
+  }
+  .player-side .hp-bar-fill { background: var(--cyan); box-shadow: 0 0 6px var(--cyan); }
+  .enemy-side  .hp-bar-fill { background: var(--red);  box-shadow: 0 0 6px var(--red); }
+  .hp-bar-fill.danger {
+    background: var(--red) !important;
+    box-shadow: 0 0 12px var(--red), 0 0 24px rgba(255,38,64,0.5) !important;
+    animation: pulse-red 0.8s ease-in-out infinite alternate;
+  }
+  @keyframes pulse-red {
+    from { opacity: 0.7; }
+    to   { opacity: 1; }
+  }
+
+  /* block & status */
+  .status-row {
+    font-size: 9px;
+    letter-spacing: 1px;
+    min-height: 16px;
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+  .tag {
+    padding: 1px 5px;
+    border: 1px solid currentColor;
+    font-size: 8px;
+    letter-spacing: 1px;
+  }
+  .tag-block   { color: var(--yellow); }
+  .tag-armored { color: var(--purple); }
+  .tag-enraged { color: var(--red); }
+
+  /* VS divider */
+  .vs-divider {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    color: rgba(255,255,255,0.15);
+    letter-spacing: 2px;
+    width: 20px;
+    flex-shrink: 0;
+    writing-mode: vertical-lr;
+  }
+
+  /* ─── TURN LOG ─── */
+  .log-panel {
+    background: var(--panel);
+    border: 1px solid rgba(0,230,255,0.1);
+    padding: 8px 10px;
+    margin-bottom: 12px;
+    min-height: 72px;
+  }
+  .log-title {
+    font-size: 8px;
+    letter-spacing: 3px;
+    color: rgba(0,230,255,0.3);
+    margin-bottom: 6px;
+    border-bottom: 1px solid rgba(0,230,255,0.08);
+    padding-bottom: 4px;
+  }
+  .log-entry {
+    font-size: 10px;
+    letter-spacing: 0.5px;
+    line-height: 1.7;
+    opacity: 0.55;
+    transition: opacity 0.3s;
+  }
+  .log-entry:last-child { opacity: 1; }
+  .log-entry.log-strike { color: var(--cyan); }
+  .log-entry.log-heavy  { color: var(--red); }
+  .log-entry.log-defend { color: var(--green); }
+  .log-entry.log-purge  { color: var(--purple); }
+  .log-entry.log-enemy  { color: rgba(255,38,64,0.85); }
+  .log-entry.log-system { color: var(--yellow); }
+
+  /* ─── ACTION BUTTONS ─── */
+  .actions-title {
+    font-size: 8px;
+    letter-spacing: 3px;
+    color: rgba(0,230,255,0.3);
+    margin-bottom: 8px;
+  }
+  .action-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-bottom: 16px;
+  }
+  .action-btn {
+    cursor: pointer;
+    background: rgba(0,0,0,0.5);
+    border: 1px solid;
+    font-family: inherit;
+    text-align: left;
+    padding: 10px 12px;
+    transition: all 0.15s;
+    position: relative;
+    overflow: hidden;
+  }
+  .action-btn::before {
+    content:'';
+    position:absolute;
+    inset:0;
+    background: linear-gradient(135deg, rgba(255,255,255,0.04) 0%, transparent 60%);
+  }
+  .action-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+  .action-btn:not(:disabled):hover {
+    transform: translateY(-1px);
+    background: rgba(255,255,255,0.05);
+  }
+  .action-btn .act-key {
+    font-size: 9px;
+    opacity: 0.4;
+    letter-spacing: 1px;
+  }
+  .action-btn .act-name {
+    font-size: 13px;
+    letter-spacing: 2px;
+    display: block;
+    margin: 2px 0;
+  }
+  .action-btn .act-desc {
+    font-size: 9px;
+    opacity: 0.6;
+    letter-spacing: 0.5px;
+  }
+
+  .act-strike { border-color: var(--cyan);   color: var(--cyan); }
+  .act-strike:not(:disabled):hover { box-shadow: 0 0 14px var(--cyan), inset 0 0 10px rgba(0,230,255,0.08); }
+  .act-heavy  { border-color: var(--red);    color: var(--red); }
+  .act-heavy:not(:disabled):hover  { box-shadow: 0 0 14px var(--red),    inset 0 0 10px rgba(255,38,64,0.08); }
+  .act-defend { border-color: var(--green);  color: var(--green); }
+  .act-defend:not(:disabled):hover { box-shadow: 0 0 14px var(--green),  inset 0 0 10px rgba(26,255,115,0.08); }
+  .act-purge  { border-color: var(--purple); color: var(--purple); }
+  .act-purge:not(:disabled):hover  { box-shadow: 0 0 14px var(--purple), inset 0 0 10px rgba(166,26,255,0.08); }
+
+  /* turn indicator */
+  .turn-indicator {
+    text-align: center;
+    font-size: 9px;
+    letter-spacing: 3px;
+    color: rgba(0,230,255,0.3);
+    margin-bottom: 8px;
+  }
+
+  /* ─── OVERLAYS ─── */
+  .overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(8,12,20,0.92);
+    z-index: 100;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 20px;
+  }
+  .overlay.active { display: flex; }
+
+  .overlay-title {
+    font-size: clamp(36px,10vw,60px);
+    letter-spacing: 8px;
+    text-align: center;
+    animation: zoomIn 0.4s ease-out;
+  }
+  @keyframes zoomIn {
+    from { transform: scale(0.6); opacity: 0; }
+    to   { transform: scale(1);   opacity: 1; }
+  }
+  .overlay-sub {
+    font-size: 12px;
+    letter-spacing: 3px;
+    opacity: 0.5;
+    text-align: center;
+  }
+
+  #win-overlay  .overlay-title { color: var(--green); text-shadow: 0 0 20px var(--green), 0 0 60px rgba(26,255,115,0.4); }
+  #lose-overlay .overlay-title { color: var(--red);   text-shadow: 0 0 20px var(--red),   0 0 60px rgba(255,38,64,0.4);  }
+
+  /* keyboard hint bar */
+  .kbd-hint {
+    text-align: center;
+    font-size: 9px;
+    letter-spacing: 2px;
+    color: rgba(0,230,255,0.2);
+    margin-top: 4px;
+  }
+  .kbd-hint span { border: 1px solid rgba(0,230,255,0.2); padding: 0 4px; margin: 0 1px; }
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- TITLE SCREEN -->
+  <div id="title-screen">
+    <div class="logo-wrap">
+      <div class="logo-neon">NEON</div>
+      <div class="logo-district">DISTRICT</div>
+      <div class="logo-sub">▸ CYBERPUNK COMBAT SIM v1.0 ◂</div>
+    </div>
+    <div class="title-deco"></div>
+    <button class="btn" id="start-btn">[ START GAME ]</button>
+    <div class="title-hints">
+      KEYBOARD: <span style="color:var(--cyan)">1</span> STRIKE &nbsp;
+      <span style="color:var(--red)">2</span> HEAVY &nbsp;
+      <span style="color:var(--green)">3</span> DEFEND &nbsp;
+      <span style="color:var(--purple)">4</span> PURGE
+    </div>
+  </div>
+
+  <!-- COMBAT SCREEN -->
+  <div id="combat-screen">
+    <div class="combat-header">▸ NEON DISTRICT — COMBAT SIM ◂</div>
+
+    <div class="arena">
+      <!-- PLAYER -->
+      <div class="combatant player-side" id="player-panel">
+        <div class="combatant-label">[ PLAYER ]</div>
+        <div class="sprite" id="player-sprite">
+          <div class="sprite-inner player-sprite">
+            <div class="head"></div>
+            <div class="arm-l"></div>
+            <div class="arm-r"></div>
+            <div class="body"></div>
+            <div class="legs"></div>
+          </div>
+        </div>
+        <div class="hp-row">
+          <span>HP</span>
+          <span id="player-hp-text">100/100</span>
+        </div>
+        <div class="hp-bar-track">
+          <div class="hp-bar-fill" id="player-hp-bar" style="width:100%"></div>
+        </div>
+        <div class="status-row" id="player-status"></div>
+      </div>
+
+      <div class="vs-divider">VS</div>
+
+      <!-- ENEMY -->
+      <div class="combatant enemy-side" id="enemy-panel">
+        <div class="combatant-label">[ ENEMY ]</div>
+        <div class="sprite" id="enemy-sprite">
+          <div class="sprite-inner enemy-sprite">
+            <div class="head"></div>
+            <div class="arm-l"></div>
+            <div class="arm-r"></div>
+            <div class="body"></div>
+            <div class="legs"></div>
+          </div>
+        </div>
+        <div class="hp-row">
+          <span>HP</span>
+          <span id="enemy-hp-text">80/80</span>
+        </div>
+        <div class="hp-bar-track">
+          <div class="hp-bar-fill" id="enemy-hp-bar" style="width:100%"></div>
+        </div>
+        <div class="status-row" id="enemy-status"></div>
+      </div>
+    </div>
+
+    <!-- TURN LOG -->
+    <div class="log-panel">
+      <div class="log-title">▸ COMBAT LOG</div>
+      <div id="log-entries"></div>
+    </div>
+
+    <!-- ACTIONS -->
+    <div class="turn-indicator" id="turn-indicator">— YOUR TURN —</div>
+    <div class="actions-title">▸ SELECT ACTION</div>
+    <div class="action-grid">
+      <button class="action-btn act-strike" data-action="strike">
+        <span class="act-key">[1]</span>
+        <span class="act-name">STRIKE</span>
+        <span class="act-desc">6–10 dmg</span>
+      </button>
+      <button class="action-btn act-heavy" data-action="heavy">
+        <span class="act-key">[2]</span>
+        <span class="act-name">HEAVY</span>
+        <span class="act-desc">14–22 dmg / 4 recoil</span>
+      </button>
+      <button class="action-btn act-defend" data-action="defend">
+        <span class="act-key">[3]</span>
+        <span class="act-name">DEFEND</span>
+        <span class="act-desc">+10 block</span>
+      </button>
+      <button class="action-btn act-purge" data-action="purge">
+        <span class="act-key">[4]</span>
+        <span class="act-name">PURGE</span>
+        <span class="act-desc">clear buffs + 4 dmg</span>
+      </button>
+    </div>
+    <div class="kbd-hint"><span>1</span>STRIKE <span>2</span>HEAVY <span>3</span>DEFEND <span>4</span>PURGE</div>
+  </div>
+</div>
+
+<!-- WIN OVERLAY -->
+<div class="overlay" id="win-overlay">
+  <div class="overlay-title">VICTORY</div>
+  <div class="overlay-sub">ENEMY NEUTRALIZED</div>
+  <button class="btn btn-green" id="win-replay">[ PLAY AGAIN ]</button>
+</div>
+
+<!-- LOSE OVERLAY -->
+<div class="overlay" id="lose-overlay">
+  <div class="overlay-title">DEFEAT</div>
+  <div class="overlay-sub">SYSTEM FAILURE</div>
+  <button class="btn btn-red" id="lose-replay">[ PLAY AGAIN ]</button>
+</div>
+
+<script>
+// ── GAME STATE ──────────────────────────────────────────────────────────────
+const PLAYER_MAX_HP = 100;
+const ENEMY_MAX_HP  = 80;
+
+let state = {};
+
+function rand(min, max) {
+  return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
+function initState() {
+  // Enemy buffs: ~40% ARMORED, ~40% ENRAGED
+  const armored = Math.random() < 0.4;
+  const enraged  = Math.random() < 0.4;
+  state = {
+    playerHP:   PLAYER_MAX_HP,
+    enemyHP:    ENEMY_MAX_HP,
+    playerBlock: 0,
+    enemyBlock:  0,
+    enemyArmored: armored,
+    enemyEnraged: enraged,
+    log: [],
+    busy: false,
+    turn: 1,
+  };
+  // Log starting buffs
+  if (armored || enraged) {
+    let msg = '⚡ ENEMY AWAKENS';
+    if (armored) msg += ' [ARMORED]';
+    if (enraged) msg += ' [ENRAGED]';
+    pushLog(msg, 'log-system');
+  } else {
+    pushLog('⚡ COMBAT INITIATED', 'log-system');
+  }
+}
+
+// ── LOG ─────────────────────────────────────────────────────────────────────
+function pushLog(msg, cls = 'log-strike') {
+  state.log.push({ msg, cls });
+  if (state.log.length > 4) state.log.shift();
+  renderLog();
+}
+
+function renderLog() {
+  const el = document.getElementById('log-entries');
+  el.innerHTML = state.log.map(e =>
+    `<div class="log-entry ${e.cls}">${e.msg}</div>`
+  ).join('');
+}
+
+// ── RENDER ──────────────────────────────────────────────────────────────────
+function renderHP() {
+  const pPct = Math.max(0, state.playerHP / PLAYER_MAX_HP * 100);
+  const ePct = Math.max(0, state.enemyHP  / ENEMY_MAX_HP  * 100);
+
+  const pBar = document.getElementById('player-hp-bar');
+  const eBar = document.getElementById('enemy-hp-bar');
+
+  pBar.style.width = pPct + '%';
+  eBar.style.width = ePct + '%';
+
+  pBar.classList.toggle('danger', state.playerHP / PLAYER_MAX_HP < 0.25);
+  eBar.classList.toggle('danger', state.enemyHP  / ENEMY_MAX_HP  < 0.25);
+
+  document.getElementById('player-hp-text').textContent =
+    `${Math.max(0,state.playerHP)}/${PLAYER_MAX_HP}`;
+  document.getElementById('enemy-hp-text').textContent =
+    `${Math.max(0,state.enemyHP)}/${ENEMY_MAX_HP}`;
+}
+
+function renderStatus() {
+  const pEl = document.getElementById('player-status');
+  const eEl = document.getElementById('enemy-status');
+
+  let pTags = '';
+  if (state.playerBlock > 0)
+    pTags += `<span class="tag tag-block">🛡 ${state.playerBlock}</span>`;
+  pEl.innerHTML = pTags;
+
+  let eTags = '';
+  if (state.enemyBlock > 0)
+    eTags += `<span class="tag tag-block">🛡 ${state.enemyBlock}</span>`;
+  if (state.enemyArmored)
+    eTags += `<span class="tag tag-armored">ARMORED</span>`;
+  if (state.enemyEnraged)
+    eTags += `<span class="tag tag-enraged">ENRAGED</span>`;
+  eEl.innerHTML = eTags;
+}
+
+function renderAll() {
+  renderHP();
+  renderStatus();
+}
+
+// ── FLASH & SHAKE ────────────────────────────────────────────────────────────
+function flashEl(id, cls) {
+  const el = document.getElementById(id);
+  el.classList.remove(cls);
+  void el.offsetWidth; // reflow
+  el.classList.add(cls);
+  setTimeout(() => el.classList.remove(cls), 450);
+}
+
+function shakeApp() {
+  const el = document.getElementById('app');
+  el.classList.remove('shake');
+  void el.offsetWidth;
+  el.classList.add('shake');
+  setTimeout(() => el.classList.remove('shake'), 380);
+}
+
+// ── APPLY DAMAGE (with block) ─────────────────────────────────────────────────
+function applyDamage(target, rawDmg) {
+  // target: 'player' or 'enemy'
+  if (target === 'player') {
+    const absorbed = Math.min(state.playerBlock, rawDmg);
+    const actual   = rawDmg - absorbed;
+    state.playerBlock = 0;  // block resets after any hit
+    state.playerHP -= actual;
+    if (actual > 0) flashEl('player-sprite', 'flash-player');
+    return { absorbed, actual };
+  } else {
+    const absorbed = Math.min(state.enemyBlock, rawDmg);
+    const actual   = rawDmg - absorbed;
+    state.enemyBlock = 0;
+    state.enemyHP -= actual;
+    if (actual > 0) flashEl('enemy-sprite', 'flash-enemy');
+    return { absorbed, actual };
+  }
+}
+
+// ── BUTTONS STATE ─────────────────────────────────────────────────────────────
+function setButtons(enabled) {
+  document.querySelectorAll('.action-btn').forEach(b => b.disabled = !enabled);
+}
+
+// ── CHECK WIN/LOSE ─────────────────────────────────────────────────────────────
+function checkEnd() {
+  if (state.enemyHP <= 0) {
+    document.getElementById('win-overlay').classList.add('active');
+    setButtons(false);
+    return true;
+  }
+  if (state.playerHP <= 0) {
+    document.getElementById('lose-overlay').classList.add('active');
+    setButtons(false);
+    return true;
+  }
+  return false;
+}
+
+// ── ENEMY ARMORED: +5 block/turn ────────────────────────────────────────────
+function applyArmoredBuff() {
+  if (state.enemyArmored) {
+    state.enemyBlock += 5;
+    pushLog(`⚙ ENEMY ARMORED +5 block (total ${state.enemyBlock})`, 'log-system');
+    renderAll();
+  }
+}
+
+// ── ENEMY ACTION ─────────────────────────────────────────────────────────────
+function enemyTurn() {
+  return new Promise(resolve => {
+    setTimeout(() => {
+      // Armored buff applies each enemy turn
+      applyArmoredBuff();
+
+      const roll = Math.random();
+      let action;
+      if      (roll < 0.40) action = 'strike';
+      else if (roll < 0.65) action = 'heavy';
+      else if (roll < 0.90) action = 'defend';
+      else                   action = 'purge';
+
+      if (action === 'strike') {
+        let dmg = rand(6, 10);
+        if (state.enemyEnraged) dmg += 4;
+        const { absorbed, actual } = applyDamage('player', dmg);
+        let msg = `◀ ENEMY STRIKE — ${actual} dmg`;
+        if (absorbed > 0) msg += ` (${absorbed} blocked)`;
+        pushLog(msg, 'log-enemy');
+      } else if (action === 'heavy') {
+        let dmg = rand(14, 22);
+        if (state.enemyEnraged) dmg += 4;
+        const { absorbed, actual } = applyDamage('player', dmg);
+        shakeApp();
+        let msg = `◀ ENEMY HEAVY — ${actual} dmg`;
+        if (absorbed > 0) msg += ` (${absorbed} blocked)`;
+        pushLog(msg, 'log-enemy');
+        // enemy recoil
+        state.enemyHP -= 4;
+        pushLog(`  └ ENEMY recoil 4 dmg`, 'log-system');
+      } else if (action === 'defend') {
+        state.enemyBlock += 10;
+        pushLog(`◀ ENEMY DEFEND — +10 block`, 'log-enemy');
+      } else if (action === 'purge') {
+        // purge: clears player block + 4 dmg
+        state.playerBlock = 0;
+        const { actual } = applyDamage('player', 4);
+        pushLog(`◀ ENEMY PURGE — cleared block + 4 dmg`, 'log-enemy');
+      }
+
+      renderAll();
+      resolve();
+    }, 600);
+  });
+}
+
+// ── PLAYER ACTION ─────────────────────────────────────────────────────────────
+async function playerAction(action) {
+  if (state.busy) return;
+  state.busy = true;
+  setButtons(false);
+
+  if (action === 'strike') {
+    const dmg = rand(6, 10);
+    const { absorbed, actual } = applyDamage('enemy', dmg);
+    let msg = `▶ STRIKE — ${actual} dmg`;
+    if (absorbed > 0) msg += ` (${absorbed} blocked)`;
+    pushLog(msg, 'log-strike');
+
+  } else if (action === 'heavy') {
+    const dmg = rand(14, 22);
+    const { absorbed, actual } = applyDamage('enemy', dmg);
+    shakeApp();
+    let msg = `▶ HEAVY — ${actual} dmg`;
+    if (absorbed > 0) msg += ` (${absorbed} blocked)`;
+    pushLog(msg, 'log-heavy');
+    // recoil
+    state.playerHP -= 4;
+    flashEl('player-sprite', 'flash-player');
+    pushLog(`  └ recoil 4 dmg`, 'log-system');
+
+  } else if (action === 'defend') {
+    state.playerBlock += 10;
+    pushLog(`▶ DEFEND — +10 block`, 'log-defend');
+
+  } else if (action === 'purge') {
+    state.enemyArmored = false;
+    state.enemyEnraged = false;
+    state.enemyBlock   = 0;
+    applyDamage('enemy', 4);
+    pushLog(`▶ PURGE — cleared enemy buffs + 4 dmg`, 'log-purge');
+  }
+
+  renderAll();
+  state.turn++;
+
+  if (checkEnd()) {
+    state.busy = false;
+    return;
+  }
+
+  // Enemy turn
+  document.getElementById('turn-indicator').textContent = '— ENEMY TURN —';
+  await enemyTurn();
+  renderAll();
+
+  state.busy = false;
+  if (!checkEnd()) {
+    document.getElementById('turn-indicator').textContent = `— YOUR TURN — (T${state.turn})`;
+    setButtons(true);
+  }
+}
+
+// ── SCREENS ─────────────────────────────────────────────────────────────────
+function showTitle() {
+  document.getElementById('title-screen').style.display = 'flex';
+  document.getElementById('combat-screen').style.display = 'none';
+  document.getElementById('win-overlay').classList.remove('active');
+  document.getElementById('lose-overlay').classList.remove('active');
+}
+
+function showCombat() {
+  document.getElementById('title-screen').style.display = 'none';
+  document.getElementById('combat-screen').style.display = 'block';
+  document.getElementById('win-overlay').classList.remove('active');
+  document.getElementById('lose-overlay').classList.remove('active');
+}
+
+function startGame() {
+  initState();
+  renderAll();
+  renderLog();
+  setButtons(true);
+  document.getElementById('turn-indicator').textContent = '— YOUR TURN —';
+  showCombat();
+}
+
+// ── EVENTS ───────────────────────────────────────────────────────────────────
+document.getElementById('start-btn').addEventListener('click', startGame);
+document.getElementById('win-replay').addEventListener('click', startGame);
+document.getElementById('lose-replay').addEventListener('click', startGame);
+
+document.querySelectorAll('.action-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    if (!btn.disabled) playerAction(btn.dataset.action);
+  });
+});
+
+document.addEventListener('keydown', e => {
+  const map = { '1':'strike', '2':'heavy', '3':'defend', '4':'purge' };
+  const action = map[e.key];
+  if (action && document.getElementById('combat-screen').style.display === 'block') {
+    const btn = document.querySelector(`.action-btn[data-action="${action}"]`);
+    if (btn && !btn.disabled) playerAction(action);
+  }
+  if (e.key === 'Enter') {
+    if (document.getElementById('title-screen').style.display !== 'none') startGame();
+  }
+});
+
+// ── INIT ─────────────────────────────────────────────────────────────────────
+showTitle();
+</script>
+</body>
+</html>
